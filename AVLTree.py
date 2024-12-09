@@ -66,7 +66,62 @@ class AVLNode(object):
 	@returns: False if self is a virtual node, True otherwise.
 	"""
 	def is_real_node(self):
-		return False
+		return self.key is not None
+
+	"""searches for a node in the dictionary corresponding to the key (starting at the given node)
+        
+	@type key: int
+	@param key: a key to be searched
+	@rtype: (AVLNode,int)
+	@returns: a tuple (x,e) where x is the node corresponding to key (or None if not found),
+	and e is the number of edges on the path between the starting node and ending node+1.
+	
+	Complexity: 𝑂(𝑙𝑜𝑔𝑛)
+	"""
+	def nodesubtreesearch(self,key):
+		len_search = 0  # in how many edges we pass
+		node = self
+		while node.is_real_node():
+			len_search +=1
+			if key == node.key:
+				return node #found
+			elif key < node.key:
+				node = node.left
+			else:
+				node = node.right
+
+		return node, len_search+1
+
+	"""returns the node with the Successor key in the tree 
+
+			@rtype: AVLNode
+			@returns: the Successor node
+			Complexity: 𝑂(𝑙𝑜𝑔𝑛)
+			"""
+	def Successor(self):
+		if self.right.is_real_node():
+			return self.right.min_node()
+		node = self
+		nodeparent = node.parent
+		while (nodeparent!=None) and (node == nodeparent.right):
+			node = nodeparent
+			nodeparent = node.parent
+		return nodeparent
+
+
+	"""returns the node with the minimal key in the node sub tree
+
+		@rtype: AVLNode
+		@returns: the minimal node, None if the given node is none
+		Complexity: 𝑂(𝑙𝑜𝑔𝑛)
+		"""
+	def min_node(self):
+		node = self
+		while node.left.is_real_node():
+			node = node.left
+		return node
+
+
 
 
 """
@@ -80,7 +135,13 @@ class AVLTree(object):
 	"""
 	def __init__(self):
 		self.root = None
+<<<<<<< HEAD
 	
+=======
+		self.max = None
+		self.TreeSize = 0
+
+>>>>>>> 2696fb2052e2cefa0680ab752ebfb81741d866bb
 
 	"""searches for a node in the dictionary corresponding to the key (starting at the root)
         
@@ -89,9 +150,12 @@ class AVLTree(object):
 	@rtype: (AVLNode,int)
 	@returns: a tuple (x,e) where x is the node corresponding to key (or None if not found),
 	and e is the number of edges on the path between the starting node and ending node+1.
+	
+	Complexity: 𝑂(𝑙𝑜𝑔𝑛)
 	"""
 	def search(self, key):
-		return None, -1
+		return self.root.key.nodesubtreesearch(key)
+
 
 
 	"""searches for a node in the dictionary corresponding to the key, starting at the max
@@ -101,9 +165,25 @@ class AVLTree(object):
 	@rtype: (AVLNode,int)
 	@returns: a tuple (x,e) where x is the node corresponding to key (or None if not found),
 	and e is the number of edges on the path between the starting node and ending node+1.
+	
+	Complexity: 𝑂(𝑙𝑜𝑔𝑛)
 	"""
 	def finger_search(self, key):
-		return None, -1
+		len_search = 0
+		node = self.max
+		root = self.root
+		if not node.is_real_node():
+			return None, 1
+		while (node.parent!=None) and (node.key>key): #findind the root of subtree where key is in
+			len_search +=1
+			node = node.parent
+
+		foundnode, e = node.nodesubtreesearch(key)
+		return foundnode,e+len_search
+
+
+
+
 
 	def solid_insert(self, key, val):
 		node = AVLNode(key, val)
@@ -201,9 +281,20 @@ def promotion_count(self, node):
 	@returns: a 3-tuple (x,e,h) where x is the new node,
 	e is the number of edges on the path between the starting node and new node before rebalancing,
 	and h is the number of PROMOTE cases during the AVL rebalancing
+	
+	Complexity
 	"""
+	#חסר עדכון גבהים בלמעלה של העץ
 	def finger_insert(self, key, val):
-		return None, -1, -1
+		len_search = 0
+		node = self.max
+		while (node.parent != None) and (node.key > key):  # findind the root of subtree where key is in
+			len_search += 1
+			node = node.parent
+		nodeTree = AVLTree()
+		nodeTree.root = node
+		newnode, e, numpromote, = nodeTree.insert(key, val)
+		return  newnode, e+len_search, numpromote
 
 
 	"""deletes node from the dictionary
@@ -248,32 +339,44 @@ def promotion_count(self, node):
 
 	@rtype: list
 	@returns: a sorted list according to key of touples (key, value) representing the data structure
+	Complexity: 𝑂(nlogn)
 	"""
 	def avl_to_array(self):
-		return None
+		arr = []
+		node = self.root.min_node()
+		for i in range(self.TreeSize):
+			argument = (node.key,node.value)
+			arr.append(argument)
+			node = node.Successor()
+		return arr
 
 
 	"""returns the node with the maximal key in the dictionary
 
 	@rtype: AVLNode
 	@returns: the maximal node, None if the dictionary is empty
+	Complexity: 𝑂(1)
 	"""
 	def max_node(self):
-		return None
+		return self.max
 
 	"""returns the number of items in dictionary 
 
 	@rtype: int
 	@returns: the number of items in dictionary 
+	Complexity: 𝑂(1)
 	"""
 	def size(self):
-		return -1	
+		return self.TreeSize
 
 
 	"""returns the root of the tree representing the dictionary
 
 	@rtype: AVLNode
 	@returns: the root, None if the dictionary is empty
+	Complexity: 𝑂(1)
 	"""
 	def get_root(self):
-		return None
+		return self.root
+
+
