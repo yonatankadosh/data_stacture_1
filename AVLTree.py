@@ -235,7 +235,7 @@ class AVLTree(object):
 	and h is the number of PROMOTE cases during the AVL rebalancing
 	"""
 	def insert(self, key, val):
-		"""Insert a new node and return necessary metadata."""
+		"""Insert a new node and return necessary metadata"""
 		# Insert the node
 		self.root = self.solid_insert(self.root, key, val)
 		new_node, e_distance = self.search(key)  # Find the newly inserted node
