@@ -23,7 +23,42 @@ class AVLNode(object):
 		self.right = None
 		self.parent = None
 		self.height = -1
-		
+
+    def get_balance(self):
+        """Calculate the balance factor of a node."""
+        if not node:
+            return 0
+        return self.left.height - self.right.height	
+
+	def right_rotation(self):
+		newRoot = self.left
+		T2 = newRoot.right
+
+		#rotating
+		newRoot.right = self
+		self.left = T2
+
+		#height update
+		newRoot.height = 1 + max((newRoot.left.height),(newRoot.right.height))
+		self.height = 1 + max((self.left.height),(self.right.height))
+
+		#returning the new root
+		return newRoot
+	
+	def left_rotataion(self):
+		newRoot = self.right
+		T2 = newRoot.left
+
+		#rotating
+		newRoot.left = self
+		self.right = T2
+
+		#height update
+		newRoot.height = 1 + max((newRoot.left.height),(newRoot.right.height))
+		self.height = 1 + max((self.left.height),(self.right.height))
+
+		#returning the new root
+		return newRoot
 
 	"""returns whether self is not a virtual node 
 
@@ -45,7 +80,7 @@ class AVLTree(object):
 	"""
 	def __init__(self):
 		self.root = None
-
+	
 
 	"""searches for a node in the dictionary corresponding to the key (starting at the root)
         
@@ -70,6 +105,47 @@ class AVLTree(object):
 	def finger_search(self, key):
 		return None, -1
 
+	def solid_insert(self, key, val):
+		node = AVLNode(key, val)
+        if self == None:
+			node.height = 0
+			self.Tree_Size = 1
+			self.max = key
+            return node
+		# Recur into the left or right subtree
+		if key < node.key:
+			node.left = self.solid_insert(node.left, key, val)
+			node.left.parent = node
+		else:
+			node.right = self.solid_insert(node.right, key, val)
+			node.right.parent = node
+
+		# Update height of this node after insertion
+		node.height = 1 + max(self.height(node.left), self.height(node.right))
+
+		# Update treesize and max value
+		self.Tree_Size += 1
+		if self.max < key:
+			self.max = key
+
+		return node
+	
+def promotion_count(self, node):
+    """Counts the number of promotions (height updates) for a node."""
+    if not node or not node.parent:  # Base case: node is None or the root
+        return 0
+
+    # Calculate the parent's new height based on its children
+    left_height = node.parent.left.height if node.parent.left else -1
+    right_height = node.parent.right.height if node.parent.right else -1
+    new_parent_height = 1 + max(left_height, right_height)
+
+    # Check if the parent's height increases
+    if new_parent_height > node.parent.height:
+        node.parent.height = new_parent_height  # Update parent's height
+        return 1 + self.promotion_count(node.parent)  # Count promotion and recurse
+    else:
+        return 0  # No promotion occurs
 
 	"""inserts a new node into the dictionary with corresponding key and value (starting at the root)
 
@@ -84,8 +160,35 @@ class AVLTree(object):
 	and h is the number of PROMOTE cases during the AVL rebalancing
 	"""
 	def insert(self, key, val):
-		return None, -1, -1
 
+		node = solid_insert(self, key, val)
+        promotions = promotions_count(self, node)
+		e_distance = self.root.height - node.height
+
+        # Check balance factor and rotate if needed
+        balance = get_balance(node)
+
+		#determine the rotation that's needed (left-left, left-right, right-right, right-left)
+
+        # Left-Left (Right Rotation)
+        if balance > 1 and key < node.left.key:
+            return self.right_rotation(node), e_distance, promotions - 1
+
+        # Left-Right (Left-Right Rotation)
+        if balance > 1 and key > node.left.key:
+            node.left = self.left_rotation(node.left)
+            return self.right_rotation(node), e_distance, promotions - 2
+
+        # Right-Right (Left Rotation)
+        if balance < -1 and key > node.right.key:
+            return self.left_rotation(node), e_distance, promotions - 1
+
+        # Right-Left (Right-Left Rotation)
+        if balance < -1 and key < node.right.key:
+            node.right = self.right_rotation(node.right)
+            return self.left_rotation(node), e_distance, promotions - 2
+
+        return node, e_distance, promotions  # Return the updated node, edge distance, and promotions
 
 	"""inserts a new node into the dictionary with corresponding key and value, starting at the max
 
