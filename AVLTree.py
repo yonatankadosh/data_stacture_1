@@ -24,11 +24,11 @@ class AVLNode(object):
 		self.parent = None
 		self.height = -1
 
-    def get_balance(self):
-        """Calculate the balance factor of a node."""
-        if not node:
-            return 0
-        return self.left.height - self.right.height	
+	def get_balance(self):
+		"""Calculate the balance factor of a node."""
+		left_height = self.left.height if self.left else -1
+		right_height = self.right.height if self.right else -1
+		return left_height - right_height
 
 	def right_rotation(self):
 		newRoot = self.left
@@ -135,13 +135,9 @@ class AVLTree(object):
 	"""
 	def __init__(self):
 		self.root = None
-<<<<<<< HEAD
-	
-=======
 		self.max = None
 		self.TreeSize = 0
 
->>>>>>> 2696fb2052e2cefa0680ab752ebfb81741d866bb
 
 	"""searches for a node in the dictionary corresponding to the key (starting at the root)
         
@@ -183,15 +179,16 @@ class AVLTree(object):
 
 
 
+	def solid_insert(self, node, key, val):
+		"""Insert a new node into the AVL tree."""
+		if not node:  # Base case: create a new node
+			new_node = AVLNode(key, val)
+			new_node.height = 0
+			self.TreeSize += 1
+			if not self.max or key > self.max:
+				self.max = key
+			return new_node
 
-
-	def solid_insert(self, key, val):
-		node = AVLNode(key, val)
-        if self == None:
-			node.height = 0
-			self.Tree_Size = 1
-			self.max = key
-            return node
 		# Recur into the left or right subtree
 		if key < node.key:
 			node.left = self.solid_insert(node.left, key, val)
@@ -200,32 +197,30 @@ class AVLTree(object):
 			node.right = self.solid_insert(node.right, key, val)
 			node.right.parent = node
 
-		# Update height of this node after insertion
-		node.height = 1 + max(self.height(node.left), self.height(node.right))
-
-		# Update treesize and max value
-		self.Tree_Size += 1
-		if self.max < key:
-			self.max = key
+		# Update height of this node
+		node.height = 1 + max(
+			node.left.height if node.left else -1,
+			node.right.height if node.right else -1
+		)
 
 		return node
-	
-def promotion_count(self, node):
-    """Counts the number of promotions (height updates) for a node."""
-    if not node or not node.parent:  # Base case: node is None or the root
-        return 0
 
-    # Calculate the parent's new height based on its children
-    left_height = node.parent.left.height if node.parent.left else -1
-    right_height = node.parent.right.height if node.parent.right else -1
-    new_parent_height = 1 + max(left_height, right_height)
+	def promotion_count(self, node):
+		"""Counts the number of promotions (height updates) for a node."""
+		if not node or not node.parent:  # Base case: node is root or None
+			return 0
 
-    # Check if the parent's height increases
-    if new_parent_height > node.parent.height:
-        node.parent.height = new_parent_height  # Update parent's height
-        return 1 + self.promotion_count(node.parent)  # Count promotion and recurse
-    else:
-        return 0  # No promotion occurs
+		# Calculate the parent's new height
+		left_height = node.parent.left.height if node.parent.left else -1
+		right_height = node.parent.right.height if node.parent.right else -1
+		new_parent_height = 1 + max(left_height, right_height)
+
+		# Check if the parent's height increases
+		if new_parent_height > node.parent.height:
+			node.parent.height = new_parent_height
+			return 1 + self.promotion_count(node.parent)  # Count promotion and recurse
+		else:
+			return 0  # No promotion occurs
 
 	"""inserts a new node into the dictionary with corresponding key and value (starting at the root)
 
@@ -240,36 +235,39 @@ def promotion_count(self, node):
 	and h is the number of PROMOTE cases during the AVL rebalancing
 	"""
 	def insert(self, key, val):
+		"""Insert a new node and return necessary metadata."""
+		# Insert the node
+		self.root = self.solid_insert(self.root, key, val)
+		new_node, e_distance = self.search(key)  # Find the newly inserted node
 
-		node = solid_insert(self, key, val)
-        promotions = promotions_count(self, node)
-		e_distance = self.root.height - node.height
+		# Count promotions
+		promotions = self.promotion_count(new_node)
 
-        # Check balance factor and rotate if needed
-        balance = get_balance(node)
+		# Calculate edge distance
+		e_distance = self.root.height - new_node.height
 
-		#determine the rotation that's needed (left-left, left-right, right-right, right-left)
+		# Rebalance if necessary
+		balance = new_node.get_balance()
 
-        # Left-Left (Right Rotation)
-        if balance > 1 and key < node.left.key:
-            return self.right_rotation(node), e_distance, promotions - 1
+		# Left-Left (Right Rotation)
+		if balance > 1 and key < new_node.left.key:
+			return self.right_rotation(new_node), e_distance, promotions - 1
 
-        # Left-Right (Left-Right Rotation)
-        if balance > 1 and key > node.left.key:
-            node.left = self.left_rotation(node.left)
-            return self.right_rotation(node), e_distance, promotions - 2
+		# Left-Right (Left-Right Rotation)
+		if balance > 1 and key > new_node.left.key:
+			new_node.left = self.left_rotation(new_node.left)
+			return self.right_rotation(new_node), e_distance, promotions - 2
 
-        # Right-Right (Left Rotation)
-        if balance < -1 and key > node.right.key:
-            return self.left_rotation(node), e_distance, promotions - 1
+		# Right-Right (Left Rotation)
+		if balance < -1 and key > new_node.right.key:
+			return self.left_rotation(new_node), e_distance, promotions - 1
 
-        # Right-Left (Right-Left Rotation)
-        if balance < -1 and key < node.right.key:
-            node.right = self.right_rotation(node.right)
-            return self.left_rotation(node), e_distance, promotions - 2
+		# Right-Left (Right-Left Rotation)
+		if balance < -1 and key < new_node.right.key:
+			new_node.right = self.right_rotation(new_node.right)
+			return self.left_rotation(new_node), e_distance, promotions - 2
 
-        return node, e_distance, promotions  # Return the updated node, edge distance, and promotions
-
+		return new_node, e_distance, promotions
 	"""inserts a new node into the dictionary with corresponding key and value, starting at the max
 
 	@type key: int
