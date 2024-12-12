@@ -152,30 +152,13 @@ class AVLTree(object):
         for row in printree(self.root):  # need printree.py file
             out = out + row + "\n"
         return out
-
-    def recursive_insert(self,node, key, val):
-        if not node or not node.is_real_node():
-            self.TreeSize += 1
-            new_node = AVLNode(key, val)
-            new_node.left = AVLNode()  # Virtual left child
-            new_node.right = AVLNode()  # Virtual right child
-            new_node.left.parent = new_node
-            new_node.right.parent = new_node
-            return new_node, 0
-
-        edge_distance = 0
-        if key < node.key:
-            node.left, edge_distance = self.recursive_insert(node.left, key, val)
-            node.left.parent = node
-        else:
-            node.right, edge_distance = self.recursive_insert(node.right, key, val)
-            node.right.parent = node
-
-        node.update_height()
-        node = self.rebalance(node)
-        return node, edge_distance + 1
-
-
+    def create_new_node(self,key,val):
+        new_node = AVLNode(key, val)
+        new_node.left = AVLNode()  # Virtual left child
+        new_node.right = AVLNode()  # Virtual right child
+        new_node.left.parent = new_node
+        new_node.right.parent = new_node
+        return new_node
     def update_max_node(self, key, new_node):
         """Update the max node in the tree."""
         if self.maxnode is None or key > self.maxnode.key:
@@ -205,8 +188,8 @@ class AVLTree(object):
 
         return node
 
-    def promotion_count(self, node):
         """Count height promotions during rebalancing."""
+    def promotion_count(self, node):
         if not node or not node.parent:
             return 0
 
@@ -234,11 +217,7 @@ class AVLTree(object):
     def insert(self, key, val):
         if not self.root:
             # If the tree is empty, create a new root.
-            self.root = AVLNode(key, val)
-            self.root.left = AVLNode()  # Virtual left child
-            self.root.right = AVLNode()  # Virtual right child
-            self.root.left.parent = self.root
-            self.root.right.parent = self.root
+            self.root = self.create_new_node(key, val)
             self.maxnode = self.root
             self.TreeSize += 1
             return self.root, 0, 0
@@ -260,11 +239,7 @@ class AVLTree(object):
                 current = current.right
 
         # Create the new node
-        new_node = AVLNode(key, val)
-        new_node.left = AVLNode()  # Virtual left child
-        new_node.right = AVLNode()  # Virtual right child
-        new_node.left.parent = new_node
-        new_node.right.parent = new_node
+        new_node = self.create_new_node(key, val)
 
         # Attach the new node to the parent
         if direction == "left":
@@ -557,5 +532,9 @@ class AVLTree(object):
 
 tree = AVLTree()
 tree.insert(1,'1')
+tree.insert(2,'1')
+tree.insert(3,'1')
+tree.finger_insert(4,'1')
+tree.finger_insert(5,'1')
 print(tree)
 
