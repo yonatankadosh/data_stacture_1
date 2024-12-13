@@ -71,6 +71,11 @@ class AVLNode(object):
         self.parent = None
         self.height = -1 if key is None else 0
 
+    """returns the node balance factor
+        	@rtype: int
+        	@returns: left child height - right child height
+        	Complexity: 𝑂(1)
+        	"""
     def get_balance(self):
         left_height = self.left.height if self.left else -1
         right_height = self.right.height if self.right else -1
@@ -85,6 +90,9 @@ class AVLNode(object):
     def is_real_node(self):
         return self.key is not None
 
+    """fixing the node height after changes
+        	Complexity: 𝑂(1)
+        	"""
     def update_height(self):
         left_height = self.left.height if self.left else -1
         right_height = self.right.height if self.right else -1
@@ -114,12 +122,12 @@ class AVLNode(object):
 
         return node, edge_distance + 1
 
-    """returns the node with the Successor key in the tree 
-
-    			@rtype: AVLNode
-    			@returns: the Successor node
-    			Complexity: 𝑂(𝑙𝑜𝑔𝑛)
-    			"""
+    """ 
+        returns the node with the Successor key in the tree 
+    	@rtype: AVLNode
+    	@returns: the Successor node
+    	Complexity: 𝑂(𝑙𝑜𝑔𝑛)
+    """
     def Successor(self):
         if self.right.is_real_node():
             return self.right.min_node()
@@ -129,6 +137,26 @@ class AVLNode(object):
             node = nodeparent
             nodeparent = node.parent
         return nodeparent
+
+    """
+            Finds the node with the largest key smaller than the current node's key.
+            @rtype: AVLNode
+            @returns: The predecessor node, or None if no predecessor exists.
+            Complexity: O(log n)
+            """
+    def Predecessor(self):
+        # אם יש עץ שמאלי, המחסיר הוא הצומת הגדול ביותר בו
+        if self.left and self.left.is_real_node():
+            return self.left.max_node()
+
+        # אחרת, נעלה במעלה העץ עד שנמצא צומת שהוא בן ימני
+        node = self
+        node_parent = node.parent
+        while node_parent is not None and node == node_parent.left:
+            node = node_parent
+            node_parent = node.parent
+
+        return node_parent
 
     """returns the node with the minimal key in the node sub tree
 
@@ -152,6 +180,18 @@ class AVLTree(object):
         for row in printree(self.root):  # need printree.py file
             out = out + row + "\n"
         return out
+
+    """ create a new node with virtual children
+
+        	@type key: int
+        	@pre: key currently does not appear in the dictionary
+        	@param key: key of item that is to be inserted to self
+        	@type val: string
+        	@param val: the value of the item
+        	@rtype: AVLNode
+        	@returns: the new node
+        	Complexity: 𝑂(1)
+        	"""
     def create_new_node(self,key,val):
         new_node = AVLNode(key, val)
         new_node.left = AVLNode()  # Virtual left child
@@ -159,48 +199,75 @@ class AVLTree(object):
         new_node.left.parent = new_node
         new_node.right.parent = new_node
         return new_node
+
+    """ Update the max node in the tree after inserting a new node
+
+            	@type key: int
+            	@type new_node: AVLNode
+            	@param key: key of item that is to be inserted to self
+            	@param new_node: the new node in the tree
+            	Complexity: 𝑂(1)
+            	"""
     def update_max_node(self, key, new_node):
-        """Update the max node in the tree."""
         if self.maxnode is None or key > self.maxnode.key:
             self.maxnode = new_node
 
-    def rebalance(self, node):
-        """Rebalance the tree at the given node."""
-        balance = node.get_balance()
+    """
+    Rebalances the AVL tree starting from the given node upwards to the root.
 
-        if balance > 1:  # Left-heavy
-            if node.left.get_balance() < 0:  # Left-Right case
-                node.left = node.left.left_rotation()
-            return node.right_rotation()
+    This function ensures that after an insertion or deletion, the AVL tree
+    remains balanced by updating the height of nodes and performing the
+    necessary rotations.
 
-        if balance < -1:  # Right-heavy
-            if node.right.get_balance() > 0:  # Right-Left case
-                node.right = node.right.right_rotation()
-            return node.left_rotation()
+    @type node: AVLNode
+    @param node: The starting node from which to begin rebalancing.
 
-        # Ensure leaves have virtual children
-        if not node.left:
-            node.left = AVLNode()
-            node.left.parent = node
-        if not node.right:
-            node.right = AVLNode()
-            node.right.parent = node
+    @type height_promotions: int
+    @param height_promotions: The current count of height promotions (increases in height).
 
-        return node
+    @rtype: (AVLNode, int)
+    @return: A tuple containing the new root of the tree and the updated count
+             of height promotions.
+             
+    Complexity: 𝑂(logn)
+    """
+    def rebalance_upwards(self, node, height_promotions):
+        current = node
+        while current:
+            # עדכון הגובה של הצומת הנוכחי
+            old_height = current.height
+            current.update_height()
+            new_height = current.height
 
-        """Count height promotions during rebalancing."""
-    def promotion_count(self, node):
-        if not node or not node.parent:
-            return 0
+            # ספירת קידום אם הגובה גדל
+            if new_height > old_height:
+                height_promotions += 1
 
-        left_height = node.parent.left.height if node.parent.left else -1
-        right_height = node.parent.right.height if node.parent.right else -1
-        new_parent_height = 1 + max(left_height, right_height)
+            # חישוב איזון מחדש
+            balance = current.get_balance()
 
-        if new_parent_height > node.parent.height:
-            node.parent.height = new_parent_height
-            return 1 + self.promotion_count(node.parent)
-        return 0
+            if balance > 1:  # Left-heavy
+                if current.left.get_balance() < 0:  # Left-Right case
+                    current.left = self.left_rotation(current.left)
+                current = self.right_rotation(current)
+
+            elif balance < -1:  # Right-heavy
+                if current.right.get_balance() > 0:  # Right-Left case
+                    current.right = self.right_rotation(current.right)
+                current = self.left_rotation(current)
+
+            # עדכון השורש אם יש שינוי
+            if current.parent is None:  # Current node is the new root
+                self.root = current
+
+            # מעבר לצומת האב
+            current = current.parent
+
+        # חזרה לשורש אם צריך
+        while self.root and self.root.parent:
+            self.root = self.root.parent
+
+        return self.root, height_promotions
 
     """inserts a new node into the dictionary with corresponding key and value (starting at the root)
 
@@ -213,6 +280,8 @@ class AVLTree(object):
     	@returns: a 3-tuple (x,e,h) where x is the new node,
     	e is the number of edges on the path between the starting node and new node before rebalancing,
     	and h is the number of PROMOTE cases during the AVL rebalancing
+    	
+    	Complexity: 𝑂(logn)
     	"""
     def insert(self, key, val):
         if not self.root:
@@ -288,6 +357,7 @@ class AVLTree(object):
         node = self.maxnode
         if not node.is_real_node():
             return None, 1
+        # Start from the maximum node and move upwards
         while (node.parent is not None) and (node.key > key):  # finding the root of subtree where key is in
             edge_distance += 1
             node = node.parent
@@ -307,7 +377,7 @@ class AVLTree(object):
     	e is the number of edges on the path between the starting node and new node before rebalancing,
     	and h is the number of PROMOTE cases during the AVL rebalancing
 
-    	Complexity
+    	Complexity o(logn)
     	"""
     def finger_insert(self, key, val):
 
@@ -332,11 +402,7 @@ class AVLTree(object):
             direction = "right"
 
         # Create the new node
-        new_node = AVLNode(key, val)
-        new_node.left = AVLNode()  # Virtual left child
-        new_node.right = AVLNode()  # Virtual right child
-        new_node.left.parent = new_node
-        new_node.right.parent = new_node
+        new_node = self.create_new_node(key,val)
 
         # Attach the new node to the parent
         if direction == "left":
@@ -358,56 +424,20 @@ class AVLTree(object):
         return new_node, edge_count, height_promotions
 
     """
-        Rebalanced the tree upwards starting from a given node.
+    Performs a left rotation on the given node.
 
-        @type node: AVLNode
-        @param node: The starting node for rebalancing.
-        @type height_promotions: int
-        @param height_promotions: The current count of height promotions.
-        @rtype: (AVLNode, int)
-        @returns: The root of the tree and the updated height promotions count.
-        """
-    def rebalance_upwards(self, node, height_promotions):
-        current = node
-        while current:
-            current.update_height()
-            balance = current.get_balance()
+    Left rotation is used to fix right-heavy imbalance in an AVL tree.
+    It involves shifting the node's right child up and making the node
+    the left child of its right child.
 
-            if balance > 1:  # Left-heavy
-                if current.left.get_balance() < 0:  # Left-Right case
-                    current.left = self.left_rotation(current.left)
-                current = self.right_rotation(current)
+    @type node: AVLNode
+    @param node: The node to perform the left rotation on.
+    @rtype: AVLNode
+    @return: The new root of the subtree after rotation.
 
-            elif balance < -1:  # Right-heavy
-                if current.right.get_balance() > 0:  # Right-Left case
-                    current.right = self.right_rotation(current.right)
-                current = self.left_rotation(current)
-
-            # Ensure the root updates correctly after rotations
-            if current.parent is None:  # Current node is the new root
-                self.root = current
-
-            # Count promotions
-            if current.parent and current.height > current.parent.height:
-                height_promotions += 1
-
-            current = current.parent
-
-        # Ensure the root is updated correctly
-        while self.root and self.root.parent:
-            self.root = self.root.parent
-
-        return self.root, height_promotions
-
+    Complexity: O(1)
+    """
     def left_rotation(self, node):
-        """
-        Perform a left rotation on the given node.
-
-        @type node: AVLNode
-        @param node: The node to perform left rotation on.
-        @rtype: AVLNode
-        @returns: The new root after rotation.
-        """
         new_root = node.right
         node.right = new_root.left
         if new_root.left:
@@ -424,15 +454,21 @@ class AVLTree(object):
         new_root.update_height()
         return new_root
 
-    def right_rotation(self, node):
-        """
-        Perform a right rotation on the given node.
+    """
+        Performs a right rotation on the given node.
+
+        Left rotation is used to fix left-heavy imbalance in an AVL tree.
+        It involves shifting the node's left child up and making the node
+        the right child of its left child.
 
         @type node: AVLNode
-        @param node: The node to perform right rotation on.
+        @param node: The node to perform the right rotation on.
         @rtype: AVLNode
-        @returns: The new root after rotation.
+        @return: The new root of the subtree after rotation.
+
+        Complexity: O(1)
         """
+    def right_rotation(self, node):
         new_root = node.left
         node.left = new_root.right
         if new_root.right:
@@ -453,9 +489,74 @@ class AVLTree(object):
 
     	@type node: AVLNode
     	@pre: node is a real pointer to a node in self
+    	Complexity: O(logn)
     	"""
     def delete(self, node):
-        return
+        if not node.is_real_node():
+            return
+
+        def transplant(u, v):
+            """
+            Replace the subtree rooted at u with the subtree rooted at v.
+            @type u: AVLNode
+            @param u: The node to be replaced
+            @type v: AVLNode
+            @param v: The node to replace u
+
+            Complexity: O(1)
+            """
+            if u.parent is None:
+                self.root = v
+            elif u == u.parent.left:
+                u.parent.left = v
+            else:
+                u.parent.right = v
+
+            if v.is_real_node():
+                v.parent = u.parent
+
+
+        # Case 1: Node is a leaf (no children)
+        if not node.left.is_real_node() and not node.right.is_real_node():
+            transplant(node, AVLNode())
+            # Rebalance the tree upwards from the parent of the deleted node
+            self.root, _ = self.rebalance_upwards(node.parent, 0)
+
+        # Case 2: Node has only one child
+        elif not node.left.is_real_node() or not node.right.is_real_node():
+            transplant(node, node.right if node.right.is_real_node() else node.left)
+            # Rebalance the tree upwards from the parent of the deleted node
+            self.root, _ = self.rebalance_upwards(node.parent, 0)
+
+        # Case 3: Node has two children
+        else:
+            # Find the successor
+            successor = node.Successor()
+
+            if successor.parent != node:
+                transplant(successor, successor.right)
+                successor.right = node.right
+                successor.right.parent = successor
+
+            transplant(node, successor)
+            successor.left = node.left
+            successor.left.parent = successor
+            # Rebalance the tree upwards from the successor
+            self.root, _ = self.rebalance_upwards(successor, 0)
+
+
+
+        # Update the maxnode if needed
+        if node == self.maxnode:
+            self.maxnode = node.Predecessor()
+
+        # Update the tree size
+        self.TreeSize -= 1
+
+        # Disconnect the deleted node's references
+        node.parent = None
+        node.left = None
+        node.right = None
 
     """joins self with item and another AVLTree
 
@@ -530,11 +631,7 @@ class AVLTree(object):
         return self.root
 
 
-tree = AVLTree()
-tree.insert(1,'1')
-tree.insert(2,'1')
-tree.insert(3,'1')
-tree.finger_insert(4,'1')
-tree.finger_insert(5,'1')
-print(tree)
+
+
+
 
