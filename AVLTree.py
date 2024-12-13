@@ -209,6 +209,7 @@ class AVLTree(object):
             	Complexity: 𝑂(1)
             	"""
     def update_max_node(self, key, new_node):
+        """Update the max node in the tree."""
         if self.maxnode is None or key > self.maxnode.key:
             self.maxnode = new_node
 
@@ -568,9 +569,62 @@ class AVLTree(object):
     	@param val: the value corresponding to key
     	@pre: all keys in self are smaller than key and all keys in tree2 are larger than key,
     	or the opposite way
+        Complexity: 𝑂(logn)
     	"""
     def join(self, tree2, key, val):
-        return
+        # edge cases
+        if tree2 is None or tree2.root is None:  # If tree2 is empty
+            new_node = self.create_new_node(key, val)
+            if self.root:
+                if key < self.root.key:
+                    new_node.right = self.root
+                    self.root.parent = new_node
+                else:
+                    new_node.left = self.root
+                    self.root.parent = new_node
+            return new_node
+
+        if self.root is None:  # If the current tree is empty
+            new_node = self.create_new_node(key, val)
+            if tree2.root:
+                if key < tree2.root.key:
+                    new_node.right = tree2.root
+                    tree2.root.parent = new_node
+                else:
+                    new_node.left = tree2.root
+                    tree2.root.parent = new_node
+            return new_node
+
+        new_root = self.create_new_node(key, val)
+        if tree2.root.key < self.root.key:
+            # Assign `self` and `tree2` as left and right subtrees
+            new_root.right = self.root
+            new_root.left = tree2.root
+
+        else:
+            # Updete max value assuming tree2 max val is not giiven
+            max_tree_2 = tree2.root
+            while max_tree_2.right:
+                max_tree_2 = max_tree_2.right
+            self.maxnode = max_tree_2
+
+            # Assign `self` and `tree2` as right and left subtrees
+            new_root.left = self.root
+            new_root.right = tree2.root
+
+        # Update parent pointers
+        if self.root:
+            self.root.parent = new_root
+        if tree2.root:
+            tree2.root.parent = new_root
+
+        # Rebalance the tree from the new root
+        self.root = self.rebalance(new_root)
+
+        # Clear tree2
+        tree2.root = None
+
+        return self.root
 
     """splits the dictionary at a given node
 
@@ -582,8 +636,49 @@ class AVLTree(object):
     dictionary smaller than node.key, and right is an AVLTree representing the keys in the 
     dictionary larger than node.key.
     """
-    def split(self, node):
-        return None, None
+    def split(self, x):
+        """Splits the AVL tree into two trees: T1 (keys < x) and T2 (keys > x)."""
+        T1 = AVLTree()  # Tree containing keys < x
+        T2 = AVLTree()  # Tree containing keys > x
+        current = self.root
+
+        while current and current.is_real_node():
+            if x < current.key:
+                if current.right and current.right.is_real_node():
+                    subtree = AVLTree()
+                    subtree.root = current.right
+                    T2.root = self.join(subtree, current.key, current.value)
+                current = current.left
+            elif x > current.key:
+                if current.left and current.left.is_real_node():
+                    subtree = AVLTree()
+                    subtree.root = current.left
+                    T1.root = self.join(subtree, current.key, current.value)
+                current = current.right
+            else:
+                break
+
+        if not current or not current.is_real_node():
+            raise ValueError(f"Key {x} not found in the tree.")
+
+        if current.left and current.left.is_real_node():
+            left_subtree = AVLTree()
+            left_subtree.root = current.left
+            T1.root = self.join(left_subtree, current.key, current.value)
+            current.left = None  # Detach the left subtree
+
+        if current.right and current.right.is_real_node():
+            right_subtree = AVLTree()
+            right_subtree.root = current.right
+            T2.root = self.join(right_subtree, current.key, current.value)
+            current.right = None  # Detach the right subtree
+
+        # Clear the original tree (self)
+        self.root = None
+        self.maxnode = None
+        self.TreeSize = 0
+
+        return T1, T2
 
     """returns an array representing dictionary 
 
