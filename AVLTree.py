@@ -4,6 +4,8 @@ def printree(t, bykey=True):
     # for row in trepr(t, bykey):
     #        print(row)
     return trepr(t, bykey)
+
+
 def trepr(t, bykey=False):
     """Return a list of textual representations of the levels in t
     bykey=True: show keys instead of values"""
@@ -13,6 +15,8 @@ def trepr(t, bykey=False):
     thistr = str(t.key) if bykey else str(t.val)
 
     return conc(trepr(t.left, bykey), thistr, trepr(t.right, bykey))
+
+
 def conc(left, root, right):
     """Return a concatenation of textual represantations of
     a root node, its left node, and its right node
@@ -45,6 +49,8 @@ def conc(left, root, right):
         result.append(row)
 
     return result
+
+
 def leftspace(row):
     """helper for conc"""
     # row is the first row of a left node
@@ -53,6 +59,8 @@ def leftspace(row):
     while row[i] == " ":
         i -= 1
     return i + 1
+
+
 def rightspace(row):
     """helper for conc"""
     # row is the first row of a right node
@@ -61,6 +69,7 @@ def rightspace(row):
     while row[i] == " ":
         i += 1
     return i
+
 
 class AVLNode(object):
     def __init__(self, key=None, value=None):
@@ -76,6 +85,7 @@ class AVLNode(object):
         	@returns: left child height - right child height
         	Complexity: 𝑂(1)
         	"""
+
     def get_balance(self):
         left_height = self.left.height if self.left else -1
         right_height = self.right.height if self.right else -1
@@ -87,12 +97,14 @@ class AVLNode(object):
     	@returns: False if self is a virtual node, True otherwise.
     	Complexity: 𝑂(1)
     	"""
+
     def is_real_node(self):
         return self.key is not None
 
     """fixing the node height after changes
         	Complexity: 𝑂(1)
         	"""
+
     def update_height(self):
         left_height = self.left.height if self.left else -1
         right_height = self.right.height if self.right else -1
@@ -108,6 +120,7 @@ class AVLNode(object):
 
     	Complexity: 𝑂(𝑙𝑜𝑔𝑛)
     	"""
+
     def nodesubtreesearch(self, key):
         edge_distance = 0  # in how many edges we pass
         node = self
@@ -164,17 +177,20 @@ class AVLNode(object):
         @returns: the minimal node, None if the given node is none
         Complexity: 𝑂(𝑙𝑜𝑔𝑛)
         """
+
     def min_node(self):
         node = self
         while node.left.is_real_node():
             node = node.left
         return node
 
+
 class AVLTree(object):
     def __init__(self):
         self.root = None
         self.maxnode = None
         self.TreeSize = 0
+
     def __repr__(self):  # no need to understand the implementation of this one
         out = ""
         for row in printree(self.root):  # need printree.py file
@@ -192,7 +208,8 @@ class AVLTree(object):
         	@returns: the new node
         	Complexity: 𝑂(1)
         	"""
-    def create_new_node(self,key,val):
+
+    def create_new_node(self, key, val):
         new_node = AVLNode(key, val)
         new_node.left = AVLNode()  # Virtual left child
         new_node.right = AVLNode()  # Virtual right child
@@ -208,6 +225,7 @@ class AVLTree(object):
             	@param new_node: the new node in the tree
             	Complexity: 𝑂(1)
             	"""
+
     def update_max_node(self, key, new_node):
         """Update the max node in the tree."""
         if self.maxnode is None or key > self.maxnode.key:
@@ -229,9 +247,10 @@ class AVLTree(object):
     @rtype: (AVLNode, int)
     @return: A tuple containing the new root of the tree and the updated count
              of height promotions.
-             
+
     Complexity: 𝑂(logn)
     """
+
     def rebalance_upwards(self, node, height_promotions):
         current = node
         while current:
@@ -281,16 +300,17 @@ class AVLTree(object):
     	@returns: a 3-tuple (x,e,h) where x is the new node,
     	e is the number of edges on the path between the starting node and new node before rebalancing,
     	and h is the number of PROMOTE cases during the AVL rebalancing
-    	
+
     	Complexity: 𝑂(logn)
     	"""
+
     def insert(self, key, val):
         if not self.root:
             # If the tree is empty, create a new root.
             self.root = self.create_new_node(key, val)
             self.maxnode = self.root
             self.TreeSize += 1
-            return self.root, 0, 0
+            return self.root, 1, 0
 
         # Traverse the tree to find the correct insertion point
         current = self.root
@@ -328,7 +348,7 @@ class AVLTree(object):
         height_promotions = 0
         self.root, height_promotions = self.rebalance_upwards(new_node, height_promotions)
 
-        return new_node, edge_count, height_promotions
+        return new_node, edge_count+1, height_promotions
 
     """searches for a node in the dictionary corresponding to the key (starting at the root)
 
@@ -340,6 +360,7 @@ class AVLTree(object):
 
     	Complexity: 𝑂(𝑙𝑜𝑔𝑛)
     	"""
+
     def search(self, key):
         return self.root.nodesubtreesearch(key)
 
@@ -353,6 +374,7 @@ class AVLTree(object):
 
     	Complexity: 𝑂(𝑙𝑜𝑔𝑛)
     	"""
+
     def finger_search(self, key):
         edge_distance = 0
         node = self.maxnode
@@ -380,64 +402,59 @@ class AVLTree(object):
 
     	Complexity o(logn)
     	"""
-    def finger_insert(self, key, val):
 
+    def finger_insert(self, key, val):
         if not self.root:
-            # If the tree is empty, create a new root.
+            # אם העץ ריק, צור שורש חדש
             return self.insert(key, val)
 
-        # Start from the maximum node and move upwards
+        # התחלה מהמקסימום
         current = self.maxnode
         edge_count = 0
 
-        while current and current.key > key:
+        # מציאת תת-העץ שבו המפתח החדש נמצא
+        while current.parent and current.key > key:
             edge_count += 1
             current = current.parent
 
-        # Determine where to insert the new node
-        if key < current.key:
-            parent = current
-            direction = "left"
-        else:
-            parent = current
-            direction = "right"
+        # המשך חיפוש בתת-העץ שמצאנו
+        parent = current
+        direction = None
 
-        # Create the new node
-        new_node = self.create_new_node(key,val)
+        while parent.is_real_node():
+            if key < parent.key:
+                direction = "left"
+                if not parent.left.is_real_node():
+                    break
+                parent = parent.left
+            else:
+                direction = "right"
+                if not parent.right.is_real_node():
+                    break
+                parent = parent.right
+            edge_count += 1
 
-        # Attach the new node to the parent
+        # יצירת הצומת החדש
+        new_node = self.create_new_node(key, val)
+
+        # חיבור הצומת החדש להורה
         if direction == "left":
             parent.left = new_node
         else:
             parent.right = new_node
         new_node.parent = parent
 
-        # Update the max node if necessary
+        # עדכון maxnode אם יש צורך
         if self.maxnode is None or key > self.maxnode.key:
             self.maxnode = new_node
 
-        # Rebalance the tree upwards
+        # איזון מחדש של העץ
         height_promotions = 0
         self.root, height_promotions = self.rebalance_upwards(new_node, height_promotions)
-        # add to the tree size
         self.TreeSize += 1
 
-        return new_node, edge_count, height_promotions
+        return new_node, edge_count+1, height_promotions
 
-    """
-    Performs a left rotation on the given node.
-
-    Left rotation is used to fix right-heavy imbalance in an AVL tree.
-    It involves shifting the node's right child up and making the node
-    the left child of its right child.
-
-    @type node: AVLNode
-    @param node: The node to perform the left rotation on.
-    @rtype: AVLNode
-    @return: The new root of the subtree after rotation.
-
-    Complexity: O(1)
-    """
     def left_rotation(self, node):
         new_root = node.right
         node.right = new_root.left
@@ -469,6 +486,7 @@ class AVLTree(object):
 
         Complexity: O(1)
         """
+
     def right_rotation(self, node):
         new_root = node.left
         node.left = new_root.right
@@ -492,6 +510,7 @@ class AVLTree(object):
     	@pre: node is a real pointer to a node in self
     	Complexity: O(logn)
     	"""
+
     def delete(self, node):
         if not node.is_real_node():
             return
@@ -515,7 +534,6 @@ class AVLTree(object):
 
             if v.is_real_node():
                 v.parent = u.parent
-
 
         # Case 1: Node is a leaf (no children)
         if not node.left.is_real_node() and not node.right.is_real_node():
@@ -545,8 +563,6 @@ class AVLTree(object):
             # Rebalance the tree upwards from the successor
             self.root, _ = self.rebalance_upwards(successor, 0)
 
-
-
         # Update the maxnode if needed
         if node == self.maxnode:
             self.maxnode = node.Predecessor()
@@ -571,6 +587,7 @@ class AVLTree(object):
     	or the opposite way
         Complexity: 𝑂(logn)
     	"""
+
     def join(self, tree2, key, val):
         # edge cases
         if tree2 is None or tree2.root is None:  # If tree2 is empty
@@ -636,6 +653,7 @@ class AVLTree(object):
     dictionary smaller than node.key, and right is an AVLTree representing the keys in the 
     dictionary larger than node.key.
     """
+
     def split(self, x):
         """Splits the AVL tree into two trees: T1 (keys < x) and T2 (keys > x)."""
         T1 = AVLTree()  # Tree containing keys < x
@@ -686,6 +704,7 @@ class AVLTree(object):
     @returns: a sorted list according to key of touples (key, value) representing the data structure
     Complexity: 𝑂(nlogn)
     """
+
     def avl_to_array(self):
         arr = []
         if self.root is None:  # empty tree
@@ -704,6 +723,7 @@ class AVLTree(object):
     @returns: the maximal node, None if the dictionary is empty
     Complexity: 𝑂(1)
     """
+
     def max_node(self):
         return self.maxnode
 
@@ -713,6 +733,7 @@ class AVLTree(object):
     @returns: the number of items in dictionary 
     Complexity: 𝑂(1)
     """
+
     def size(self):
         return self.TreeSize
 
@@ -722,11 +743,8 @@ class AVLTree(object):
     @returns: the root, None if the dictionary is empty
     Complexity: 𝑂(1)
     """
+
     def get_root(self):
         return self.root
-
-
-
-
 
 
