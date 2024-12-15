@@ -600,60 +600,53 @@ class AVLTree(object):
         Complexity: 𝑂(logn)
     	"""
     def join(self, tree2, key, val):
-        # edge cases
-        if tree2 is None or tree2.root is None:  # If tree2 is empty
-            new_node = self.create_new_node(key, val)
-            if self.root:
-                if key < self.root.key:
-                    new_node.right = self.root
-                    self.root.parent = new_node
-                else:
-                    new_node.left = self.root
-                    self.root.parent = new_node
-            return new_node
-
-        if self.root is None:  # If the current tree is empty
-            new_node = self.create_new_node(key, val)
-            if tree2.root:
-                if key < tree2.root.key:
-                    new_node.right = tree2.root
-                    tree2.root.parent = new_node
-                else:
-                    new_node.left = tree2.root
-                    tree2.root.parent = new_node
-            return new_node
-
-        new_root = self.create_new_node(key, val)
-        if tree2.root.key < self.root.key:
-            # Assign `self` and `tree2` as left and right subtrees
-            new_root.right = self.root
-            new_root.left = tree2.root
-
-        else:
-            # Updete max value assuming tree2 max val is not giiven
-            max_tree_2 = tree2.root
-            while max_tree_2.right:
-                max_tree_2 = max_tree_2.right
-            self.maxnode = max_tree_2
-
-            # Assign `self` and `tree2` as right and left subtrees
-            new_root.left = self.root
+        # Handle edge cases where one of the trees is empty
+        if not self.root:  # If self is empty, the result is tree2 with the new root
+            new_root = AVLNode(key, val)
+            new_root.left = AVLNode()  # Virtual node
             new_root.right = tree2.root
+            if tree2.root:
+                tree2.root.parent = new_root
+            self.root = new_root
+            self.maxnode = tree2.maxnode if tree2.maxnode else new_root
+            self.TreeSize = tree2.TreeSize + 1
+            return self
 
-        # Update parent pointers
+        if not tree2.root:  # If tree2 is empty, the result is self with the new root
+            new_root = AVLNode(key, val)
+            new_root.left = self.root
+            self.root.parent = new_root
+            new_root.right = AVLNode()  # Virtual node
+            self.root = new_root
+            self.maxnode = self.maxnode if self.maxnode else new_root
+            self.TreeSize += 1
+            return self
+
+        # Both trees are non-empty, create the new root
+        new_root = AVLNode(key, val)
+        new_root.left = self.root
+        new_root.right = tree2.root
         if self.root:
             self.root.parent = new_root
         if tree2.root:
             tree2.root.parent = new_root
 
-        # Rebalance the tree from the new root
-        self.root = self.rebalance(new_root)
+        # Update the maxnode
+        self.maxnode = tree2.maxnode if tree2.maxnode else new_root
+
+        # Rebalance the tree starting from the new root upwards
+        height_promotions = 0
+        self.root, height_promotions = self.rebalance_upwards(new_root, height_promotions)
+
+        # Update the tree size
+        self.TreeSize += tree2.TreeSize + 1
 
         # Clear tree2
         tree2.root = None
+        tree2.maxnode = None
+        tree2.TreeSize = 0
 
-        return self.root
-
+        return self
     """splits the dictionary at a given node
 
     @type node: AVLNode
@@ -667,42 +660,54 @@ class AVLTree(object):
 
     def split(self, x):
         """Splits the AVL tree into two trees: T1 (keys < x) and T2 (keys > x)."""
-        T1 = AVLTree()  # Tree containing keys < x
-        T2 = AVLTree()  # Tree containing keys > x
+        T1 = AVLTree()  # Tree for keys < x
+        T2 = AVLTree()  # Tree for keys > x
+
+        # Start at the root of the tree
         current = self.root
 
+        # Traverse the tree to locate the split node - מיותר, פשוט הסתבכתי עם הערכים המוחזרים מכל פונקציות החיפוש האחרות
         while current and current.is_real_node():
-            if x < current.key:
-                if current.right and current.right.is_real_node():
-                    subtree = AVLTree()
-                    subtree.root = current.right
-                    T2.root = self.join(subtree, current.key, current.value)
-                current = current.left
-            elif x > current.key:
-                if current.left and current.left.is_real_node():
-                    subtree = AVLTree()
-                    subtree.root = current.left
-                    T1.root = self.join(subtree, current.key, current.value)
-                current = current.right
-            else:
+            if x == current.key:
                 break
+            elif x < current.key:
+                current = current.left
+            else:
+                current = current.right
 
+        # Handle the case where the key is not found
         if not current or not current.is_real_node():
             raise ValueError(f"Key {x} not found in the tree.")
 
+        # Process left and right subtrees of the split node
         if current.left and current.left.is_real_node():
-            left_subtree = AVLTree()
-            left_subtree.root = current.left
-            T1.root = self.join(left_subtree, current.key, current.value)
-            current.left = None  # Detach the left subtree
-
+            T1.root = current.left
+            T1.root.parent = None
+            T1.TreeSize = self.TreeSize - 1  # Update size
         if current.right and current.right.is_real_node():
-            right_subtree = AVLTree()
-            right_subtree.root = current.right
-            T2.root = self.join(right_subtree, current.key, current.value)
-            current.right = None  # Detach the right subtree
+            T2.root = current.right
+            T2.root.parent = None
+            T2.TreeSize = self.TreeSize - 1  # Update size
+        # Traverse upwards to include parents
+        while current.parent:
+            parent = current.parent
+            if current == parent.left:
+                # Parent and right subtree go to T2
+                subtree = AVLTree()
+                subtree.root = parent.right
+                if subtree.root:
+                    subtree.root.parent = None
+                T2 = T2.join(subtree, parent.key, parent.value)
+            elif current == parent.right:
+                # Parent and left subtree go to T1
+                subtree = AVLTree()
+                subtree.root = parent.left
+                if subtree.root:
+                    subtree.root.parent = None
+                T1 = T1.join(subtree, parent.key, parent.value)
+            current = parent
 
-        # Clear the original tree (self)
+        # Clear the original tree
         self.root = None
         self.maxnode = None
         self.TreeSize = 0
@@ -765,6 +770,24 @@ class AVLTree(object):
 
 
 
+##""""----tests----""""
+# Create a tree and insert values
 
+tree = AVLTree()
+for i in range(10):
+    tree.insert(i, f"Value {i}")
 
+print("Original Tree:")
+print(tree)
 
+T1, T2 = tree.split(5)
+
+print("\nAfter Split:")
+print("T1 (keys < 5):")
+print(T1)
+
+print("T2 (keys > 5):")
+print(T2)
+
+print("Original Tree (should be empty):")
+print(tree)
