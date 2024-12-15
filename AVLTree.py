@@ -142,11 +142,14 @@ class AVLNode(object):
     	Complexity: 𝑂(𝑙𝑜𝑔𝑛)
     """
     def Successor(self):
+        # אם יש בן ימני, העוקב הוא הצומת הקטן ביותר בו
         if self.right.is_real_node():
             return self.right.min_node()
+
+        # אחרת, נעלה במעלה העץ עד שנמצא צומת שהוא בן שמאלי
         node = self
         nodeparent = node.parent
-        while (nodeparent != None) and (node == nodeparent.right):
+        while (nodeparent is not None) and (node == nodeparent.right):
             node = nodeparent
             nodeparent = node.parent
         return nodeparent
@@ -158,9 +161,9 @@ class AVLNode(object):
             Complexity: O(log n)
             """
     def Predecessor(self):
-        # אם יש עץ שמאלי, המחסיר הוא הצומת הגדול ביותר בו
+        # אם יש בן שמאלי, הקודם הוא הצומת הגדול ביותר בו
         if self.left and self.left.is_real_node():
-            return self.left.max_node()
+            return self.left.subtree_max_node()
 
         # אחרת, נעלה במעלה העץ עד שנמצא צומת שהוא בן ימני
         node = self
@@ -177,11 +180,21 @@ class AVLNode(object):
         @returns: the minimal node, None if the given node is none
         Complexity: 𝑂(𝑙𝑜𝑔𝑛)
         """
-
     def min_node(self):
         node = self
         while node.left.is_real_node():
             node = node.left
+        return node
+
+    """returns the node with the maximal key in the node sub tree
+        @rtype: AVLNode
+        @returns: the maximal node, None if the given node is none
+        Complexity: 𝑂(𝑙𝑜𝑔𝑛)
+        """
+    def subtree_max_node(self):
+        node = self
+        while node.right.is_real_node():
+            node = node.right
         return node
 
 
@@ -510,7 +523,6 @@ class AVLTree(object):
     	@pre: node is a real pointer to a node in self
     	Complexity: O(logn)
     	"""
-
     def delete(self, node):
         if not node.is_real_node():
             return
@@ -587,7 +599,6 @@ class AVLTree(object):
     	or the opposite way
         Complexity: 𝑂(logn)
     	"""
-
     def join(self, tree2, key, val):
         # edge cases
         if tree2 is None or tree2.root is None:  # If tree2 is empty
@@ -702,20 +713,26 @@ class AVLTree(object):
 
     @rtype: list
     @returns: a sorted list according to key of touples (key, value) representing the data structure
-    Complexity: 𝑂(nlogn)
+    Complexity: 𝑂(n)
     """
-
     def avl_to_array(self):
         arr = []
-        if self.root is None:  # empty tree
-            return arr
-        node = self.root.min_node()
-        print(self.TreeSize)
-        for i in range(self.TreeSize):
-            argument = (node.key, node.value)
-            arr.append(argument)
-            node = node.Successor()
+        self.avl_to_array_rec(self.root,arr)
         return arr
+
+    """
+    recursive call (in order style) to create array representing dictionary 
+    @type node: AVLNode
+    @type arr: list
+    @param node: where to begin the recursion
+    @param arr: empty list to fill with keys
+    Complexity: 𝑂(n)
+    """
+    def avl_to_array_rec(self,node,arr):
+        if node.is_real_node():
+            self.avl_to_array_rec(node.left,arr)
+            arr.append((node.key,node.value))
+            self.avl_to_array_rec(node.right, arr)
 
     """returns the node with the maximal key in the dictionary
 
@@ -723,7 +740,6 @@ class AVLTree(object):
     @returns: the maximal node, None if the dictionary is empty
     Complexity: 𝑂(1)
     """
-
     def max_node(self):
         return self.maxnode
 
@@ -746,5 +762,9 @@ class AVLTree(object):
 
     def get_root(self):
         return self.root
+
+
+
+
 
 
