@@ -221,7 +221,6 @@ class AVLTree(object):
         	@returns: the new node
         	Complexity: 𝑂(1)
         	"""
-
     def create_new_node(self, key, val):
         new_node = AVLNode(key, val)
         new_node.left = AVLNode()  # Virtual left child
@@ -238,10 +237,9 @@ class AVLTree(object):
             	@param new_node: the new node in the tree
             	Complexity: 𝑂(1)
             	"""
-
-    def update_max_node(self, key, new_node):
+    def update_max_node(self, new_node):
         """Update the max node in the tree."""
-        if self.maxnode is None or key > self.maxnode.key:
+        if self.maxnode is None or new_node.key > self.maxnode.key:
             self.maxnode = new_node
 
     """
@@ -352,8 +350,7 @@ class AVLTree(object):
         new_node.parent = parent
 
         # Update the max node if necessary
-        if self.maxnode is None or key > self.maxnode.key:
-            self.maxnode = new_node
+        self.update_max_node(new_node)
         # add to the tree size
         self.TreeSize += 1
 
@@ -458,8 +455,7 @@ class AVLTree(object):
         new_node.parent = parent
 
         # עדכון maxnode אם יש צורך
-        if self.maxnode is None or key > self.maxnode.key:
-            self.maxnode = new_node
+        self.update_max_node(new_node)
 
         # איזון מחדש של העץ
         height_promotions = 0
