@@ -647,6 +647,7 @@ class AVLTree(object):
         tree2.TreeSize = 0
 
         return self
+
     """splits the dictionary at a given node
 
     @type node: AVLNode
@@ -658,61 +659,63 @@ class AVLTree(object):
     dictionary larger than node.key.
     """
 
-    def split(self, x):
+    def split(self, node):
         """Splits the AVL tree into two trees: T1 (keys < x) and T2 (keys > x)."""
-        T1 = AVLTree()  # Tree for keys < x
-        T2 = AVLTree()  # Tree for keys > x
+        key = node.key
 
-        # Start at the root of the tree
-        current = self.root
+        smaller_tree = AVLTree()
+        bigger_tree = AVLTree()
 
-        # Traverse the tree to locate the split node - מיותר, פשוט הסתבכתי עם הערכים המוחזרים מכל פונקציות החיפוש האחרות
-        while current and current.is_real_node():
-            if x == current.key:
-                break
-            elif x < current.key:
-                current = current.left
-            else:
-                current = current.right
+        if node.left.is_real_node():
+            smaller_tree.root = node.left
+            smaller_tree.root.parent = None
+        if node.right.is_real_node():
+            bigger_tree.root = node.right
+            bigger_tree.root.parent = None
 
-        # Handle the case where the key is not found
-        if not current or not current.is_real_node():
-            raise ValueError(f"Key {x} not found in the tree.")
+        node = node.parent
+        while node is not None:
+            if node.key < key:
+                new_smaller_tree = AVLTree()
+                new_smaller_tree.root = node.left
+                if new_smaller_tree.root:
+                    new_smaller_tree.root.parent = None
+                smaller_tree.join(new_smaller_tree, node.key, node.value)
+            else:  # node.key > key
+                new_bigger_tree = AVLTree()
+                new_bigger_tree.root = node.right
+                if new_bigger_tree.root:
+                    new_bigger_tree.root.parent = None
+                bigger_tree.join(new_bigger_tree, node.key, node.value)
+            node = node.parent
 
-        # Process left and right subtrees of the split node
-        if current.left and current.left.is_real_node():
-            T1.root = current.left
-            T1.root.parent = None
-            T1.TreeSize = self.TreeSize - 1  # Update size
-        if current.right and current.right.is_real_node():
-            T2.root = current.right
-            T2.root.parent = None
-            T2.TreeSize = self.TreeSize - 1  # Update size
-        # Traverse upwards to include parents
-        while current.parent:
-            parent = current.parent
-            if current == parent.left:
-                # Parent and right subtree go to T2
-                subtree = AVLTree()
-                subtree.root = parent.right
-                if subtree.root:
-                    subtree.root.parent = None
-                T2 = T2.join(subtree, parent.key, parent.value)
-            elif current == parent.right:
-                # Parent and left subtree go to T1
-                subtree = AVLTree()
-                subtree.root = parent.left
-                if subtree.root:
-                    subtree.root.parent = None
-                T1 = T1.join(subtree, parent.key, parent.value)
-            current = parent
+        # Update maxnode for both trees
+        bigger_tree.maxnode = self.maxnode
+        smaller_tree_max = smaller_tree.root
+        if smaller_tree.root is not None:
+            while smaller_tree_max.right.is_real_node():
+                smaller_tree_max = smaller_tree_max.right
+            smaller_tree.maxnode = smaller_tree_max
+
+        # Update TreeSize for both trees
+        bigger_tree.TreeSize = bigger_tree.size_of_subtree(bigger_tree.root)
+        smaller_tree.TreeSize = smaller_tree.size_of_subtree(smaller_tree.root)
+
+
 
         # Clear the original tree
         self.root = None
         self.maxnode = None
         self.TreeSize = 0
 
-        return T1, T2
+        return smaller_tree, bigger_tree
+
+
+    def size_of_subtree(self, node):
+        """Helper to calculate the size of a subtree."""
+        if not node or not node.is_real_node():
+            return 0
+        return 1 + self.size_of_subtree(node.left) + self.size_of_subtree(node.right)
 
     """returns an array representing dictionary 
 
@@ -769,25 +772,37 @@ class AVLTree(object):
         return self.root
 
 
-
+""""
 ##""""----tests----""""
-# Create a tree and insert values
-
 tree = AVLTree()
 for i in range(10):
     tree.insert(i, f"Value {i}")
 
 print("Original Tree:")
 print(tree)
+print(tree.TreeSize)
 
-T1, T2 = tree.split(5)
 
-print("\nAfter Split:")
-print("T1 (keys < 5):")
-print(T1)
+# Search for the node with key 5
+x, _ = tree.search(5)  # Extract the node and ignore the edge count
 
-print("T2 (keys > 5):")
-print(T2)
+if not x or not x.is_real_node():
+    print("Node not found in the tree.")
+else:
+    print(f"Node found: {x.key}")
 
-print("Original Tree (should be empty):")
+    # Perform the split
+    T1, T2 = tree.split(x)
+
+    print("Tree with keys < 5:")
+    print(T1)
+    print(T1.TreeSize)
+
+    print("Tree with keys > 5:")
+    print(T2)
+    print(T2.TreeSize)
+
 print(tree)
+print(tree.TreeSize)
+
+"""
