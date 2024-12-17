@@ -91,6 +91,7 @@ class AVLNode(object):
         right_height = self.right.height if self.right else -1
         return left_height - right_height
 
+
     """returns whether self is not a virtual node 
 
     	@rtype: bool
@@ -294,9 +295,8 @@ class AVLTree(object):
             # מעבר לצומת האב
             current = current.parent
 
-        # חזרה לשורש אם צריך
-        while self.root and self.root.parent:
-            self.root = self.root.parent
+            if abs(balance) <=1 and new_height == old_height and new_height>1:
+                break
 
         return self.root, height_promotions
 
@@ -321,7 +321,7 @@ class AVLTree(object):
             self.root = self.create_new_node(key, val)
             self.maxnode = self.root
             self.TreeSize += 1
-            return self.root, 1, 0
+            return self.root, 0, 0
 
         # Traverse the tree to find the correct insertion point
         current = self.root
@@ -358,7 +358,7 @@ class AVLTree(object):
         height_promotions = 0
         self.root, height_promotions = self.rebalance_upwards(new_node, height_promotions)
 
-        return new_node, edge_count+1, height_promotions
+        return new_node, edge_count, height_promotions
 
     """searches for a node in the dictionary corresponding to the key (starting at the root)
 
@@ -384,7 +384,6 @@ class AVLTree(object):
 
     	Complexity: 𝑂(𝑙𝑜𝑔𝑛)
     	"""
-
     def finger_search(self, key):
         edge_distance = 0
         node = self.maxnode
@@ -412,7 +411,6 @@ class AVLTree(object):
 
     	Complexity o(logn)
     	"""
-
     def finger_insert(self, key, val):
         if not self.root:
             # אם העץ ריק, צור שורש חדש
@@ -462,7 +460,7 @@ class AVLTree(object):
         self.root, height_promotions = self.rebalance_upwards(new_node, height_promotions)
         self.TreeSize += 1
 
-        return new_node, edge_count+1, height_promotions
+        return new_node, edge_count, height_promotions
 
     def left_rotation(self, node):
         new_root = node.right
@@ -495,7 +493,6 @@ class AVLTree(object):
 
         Complexity: O(1)
         """
-
     def right_rotation(self, node):
         new_root = node.left
         node.left = new_root.right
@@ -763,42 +760,6 @@ class AVLTree(object):
     @returns: the root, None if the dictionary is empty
     Complexity: 𝑂(1)
     """
-
     def get_root(self):
         return self.root
 
-
-""""
-##""""----tests----""""
-tree = AVLTree()
-for i in range(10):
-    tree.insert(i, f"Value {i}")
-
-print("Original Tree:")
-print(tree)
-print(tree.TreeSize)
-
-
-# Search for the node with key 5
-x, _ = tree.search(5)  # Extract the node and ignore the edge count
-
-if not x or not x.is_real_node():
-    print("Node not found in the tree.")
-else:
-    print(f"Node found: {x.key}")
-
-    # Perform the split
-    T1, T2 = tree.split(x)
-
-    print("Tree with keys < 5:")
-    print(T1)
-    print(T1.TreeSize)
-
-    print("Tree with keys > 5:")
-    print(T2)
-    print(T2.TreeSize)
-
-print(tree)
-print(tree.TreeSize)
-
-"""
