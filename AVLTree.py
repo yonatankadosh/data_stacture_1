@@ -264,16 +264,12 @@ class AVLTree(object):
     """
 
     def rebalance_upwards(self, node, height_promotions):
+        #print("start rebalance at: ",node.key)
+        #print("node heigh: ",node.height)
         current = node
         while current:
-            # עדכון הגובה של הצומת הנוכחי
-            old_height = current.height
-            current.update_height()
-            new_height = current.height
+         #   print("current ",current.key)
 
-            # ספירת קידום אם הגובה גדל
-            if new_height > old_height:
-                height_promotions += 1
 
             # חישוב איזון מחדש
             balance = current.get_balance()
@@ -287,6 +283,16 @@ class AVLTree(object):
                 if current.right.get_balance() > 0:  # Right-Left case
                     current.right = self.right_rotation(current.right)
                 current = self.left_rotation(current)
+
+            # עדכון הגובה של הצומת הנוכחי
+            old_height = current.height
+            current.update_height()
+            new_height = current.height
+
+             # ספירת קידום אם הגובה גדל
+            if new_height > old_height:
+                height_promotions += 1
+                #print("change heigh of:",current.key )
 
             # עדכון השורש אם יש שינוי
             if current.parent is None:  # Current node is the new root
@@ -321,13 +327,13 @@ class AVLTree(object):
             self.root = self.create_new_node(key, val)
             self.maxnode = self.root
             self.TreeSize += 1
-            return self.root, 0, 0
+            return self.root, 1, 0
 
         # Traverse the tree to find the correct insertion point
         current = self.root
         parent = None
         direction = None
-        edge_count = 0
+        edge_count = 1
 
         while current.is_real_node():
             parent = current
@@ -418,7 +424,7 @@ class AVLTree(object):
 
         # התחלה מהמקסימום
         current = self.maxnode
-        edge_count = 0
+        edge_count = 1
 
         # מציאת תת-העץ שבו המפתח החדש נמצא
         while current.parent and current.key > key:
