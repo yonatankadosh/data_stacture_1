@@ -594,42 +594,74 @@ class AVLTree(object):
     	"""
     def join(self, tree2, key, val):
         # Handle edge cases where one of the trees is empty
-        if not self.root:  # If self is empty, the result is tree2 with the new root
-            new_root = AVLNode(key, val)
-            new_root.left = AVLNode()  # Virtual node
-            new_root.right = tree2.root
-            if tree2.root:
-                tree2.root.parent = new_root
-            self.root = new_root
-            self.maxnode = tree2.maxnode if tree2.maxnode else new_root
-            self.TreeSize = tree2.TreeSize + 1
+        if not self.root:  # If self is empty, simply insert the given key and val
+            tree2.insert(key, val)
+            self.root = tree2.root
+            self.maxnode = tree2.maxnode
+            self.TreeSize = tree2.TreeSize
+            # Clear tree2
+            tree2.root = None
+            tree2.maxnode = None
+            tree2.TreeSize = 0
             return self
 
-        if not tree2.root:  # If tree2 is empty, the result is self with the new root
-            new_root = AVLNode(key, val)
-            new_root.left = self.root
-            self.root.parent = new_root
-            new_root.right = AVLNode()  # Virtual node
-            self.root = new_root
-            self.maxnode = self.maxnode if self.maxnode else new_root
-            self.TreeSize += 1
+        if not tree2.root:  # If tree2 is empty, simply insert the given key and val
+            self.insert(key, val)
             return self
 
-        # Both trees are non-empty, create the new root
-        new_root = AVLNode(key, val)
-        new_root.left = self.root
-        new_root.right = tree2.root
-        if self.root:
-            self.root.parent = new_root
-        if tree2.root:
-            tree2.root.parent = new_root
+        # Both trees are non-empty, find the right height to join
+        # Assign self as the higher tree
+        if self.root.height < tree2.root.height:
+            tmp_root = tree2.root
+            tmp_max = tree2.maxnode
+            tree2.root = self.root
+            tree2.maxnode = self.maxnode
+            self.root = tmp_root
+            self.maxnode = tmp_max
 
-        # Update the maxnode
-        self.maxnode = tree2.maxnode if tree2.maxnode else new_root
+        # Determine the greater tree
+        is_tree2_smaller = self.root.key > tree2.root.key
+
+        prev = None
+        curr = self.root
+
+        # Traverse to find the correct height to connect tree2
+        while curr.is_real_node() and tree2.root.height < curr.height:
+            prev = curr
+            if is_tree2_smaller:
+                curr = curr.left
+            else:
+                curr = curr.right
+
+        # Connecting the tree at the same height using the given node
+        new_node = AVLNode(key, val)
+
+        if is_tree2_smaller:
+            new_node.left = tree2.root
+            new_node.right = curr
+        else:  # tree2 is greater
+            new_node.right = tree2.root
+            new_node.left = curr
+
+        tree2.root.parent = new_node
+        curr.parent = new_node
+
+        # Reconnecting the higher part of self
+        if prev is None:  # The given trees are of the same original height
+            self.root = new_node
+        else:
+            if is_tree2_smaller:
+                prev.left = new_node
+            else:  # tree2 is bigger
+                prev.right = new_node
+        new_node.parent = prev
+
+        # Computing new_node height after merging into the tree
+        new_node.height = max(new_node.left.height, new_node.right.height) + 1
 
         # Rebalance the tree starting from the new root upwards
         height_promotions = 0
-        self.root, height_promotions = self.rebalance_upwards(new_root, height_promotions)
+        self.root, height_promotions = self.rebalance_upwards(new_node, height_promotions)
 
         # Update the tree size
         self.TreeSize += tree2.TreeSize + 1
