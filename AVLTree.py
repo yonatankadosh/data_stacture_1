@@ -79,6 +79,14 @@ class AVLNode(object):
         self.right = None
         self.parent = None
         self.height = -1 if key is None else 0
+        self.size = 1 if key is not None else 0  # Default size for real/virtual nodes
+
+
+    def update_size(self):
+        """Update the size of the current node."""
+        left_size = self.left.size if self.left and self.left.is_real_node() else 0
+        right_size = self.right.size if self.right and self.right.is_real_node() else 0
+        self.size = 1 + left_size + right_size
 
     """returns the node balance factor
         	@rtype: int
@@ -110,6 +118,7 @@ class AVLNode(object):
         left_height = self.left.height if self.left else -1
         right_height = self.right.height if self.right else -1
         self.height = 1 + max(left_height, right_height)
+        self.update_size() # Whenever updateding the height, update the size as well
 
     """searches for a node in the dictionary corresponding to the key (starting at the given node)
 
@@ -264,11 +273,12 @@ class AVLTree(object):
     """
 
     def rebalance_upwards(self, node, height_promotions):
-        #print("start rebalance at: ",node.key)
-        #print("node heigh: ",node.height)
         current = node
         while current:
-         #   print("current ",current.key)
+            # עדכון הגובה של הצומת הנוכחי
+            old_height = current.height
+            current.update_height()
+            new_height = current.height
 
 
             # חישוב איזון מחדש
@@ -729,8 +739,8 @@ class AVLTree(object):
             smaller_tree.maxnode = smaller_tree_max
 
         # Update TreeSize for both trees
-        bigger_tree.TreeSize = bigger_tree.size_of_subtree(bigger_tree.root)
-        smaller_tree.TreeSize = smaller_tree.size_of_subtree(smaller_tree.root)
+        bigger_tree.TreeSize = bigger_tree.root.size
+        smaller_tree.TreeSize = smaller_tree.root.size
 
 
 
@@ -800,4 +810,6 @@ class AVLTree(object):
     """
     def get_root(self):
         return self.root
+
+
 
