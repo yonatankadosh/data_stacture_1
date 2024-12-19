@@ -81,9 +81,11 @@ class AVLNode(object):
         self.height = -1 if key is None else 0
         self.size = 1 if key is not None else 0  # Default size for real/virtual nodes
 
+    """Update the size of the current nodd
+        Complexity: 𝑂(1)
+    """
 
     def update_size(self):
-        """Update the size of the current node."""
         left_size = self.left.size if self.left and self.left.is_real_node() else 0
         right_size = self.right.size if self.right and self.right.is_real_node() else 0
         self.size = 1 + left_size + right_size
