@@ -83,12 +83,13 @@ class AVLNode(object):
 
     """Update the size of the current nodd
         Complexity: 𝑂(1)
-    """
+    
 
     def update_size(self):
         left_size = self.left.size if self.left and self.left.is_real_node() else 0
         right_size = self.right.size if self.right and self.right.is_real_node() else 0
         self.size = 1 + left_size + right_size
+    """
 
     """returns the node balance factor
         	@rtype: int
@@ -120,7 +121,7 @@ class AVLNode(object):
         left_height = self.left.height if self.left else -1
         right_height = self.right.height if self.right else -1
         self.height = 1 + max(left_height, right_height)
-        self.update_size() # Whenever updateding the height, update the size as well
+        #self.update_size() # Whenever updateding the height, update the size as well
 
     """searches for a node in the dictionary corresponding to the key (starting at the given node)
 
@@ -608,7 +609,7 @@ class AVLTree(object):
     	@param val: the value corresponding to key
     	@pre: all keys in self are smaller than key and all keys in tree2 are larger than key,
     	or the opposite way
-        Complexity: 𝑂(logn)
+        Complexity: 𝑂(logn - logm + 1)
     	"""
     def join(self, tree2, key, val):
         # Handle edge cases where one of the trees is empty
@@ -700,6 +701,7 @@ class AVLTree(object):
     @returns: a tuple (left, right), where left is an AVLTree representing the keys in the 
     dictionary smaller than node.key, and right is an AVLTree representing the keys in the 
     dictionary larger than node.key.
+    Complexity: 𝑂(logn)
     """
 
     def split(self, node):
