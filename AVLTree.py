@@ -274,15 +274,9 @@ class AVLTree(object):
 
     Complexity: 𝑂(logn)
     """
-
     def rebalance_upwards(self, node, height_promotions):
         current = node
         while current:
-            # עדכון הגובה של הצומת הנוכחי
-            old_height = current.height
-            current.update_height()
-            new_height = current.height
-
 
             # חישוב איזון מחדש
             balance = current.get_balance()
@@ -305,7 +299,7 @@ class AVLTree(object):
              # ספירת קידום אם הגובה גדל
             if new_height > old_height:
                 height_promotions += 1
-                #print("change heigh of:",current.key )
+
 
             # עדכון השורש אם יש שינוי
             if current.parent is None:  # Current node is the new root
@@ -333,7 +327,6 @@ class AVLTree(object):
 
     	Complexity: 𝑂(logn)
     	"""
-
     def insert(self, key, val):
         if not self.root:
             # If the tree is empty, create a new root.
@@ -389,7 +382,6 @@ class AVLTree(object):
 
     	Complexity: 𝑂(𝑙𝑜𝑔𝑛)
     	"""
-
     def search(self, key):
         return self.root.nodesubtreesearch(key)
 
@@ -481,6 +473,20 @@ class AVLTree(object):
 
         return new_node, edge_count, height_promotions
 
+    """
+            Performs a left rotation on the given node.
+
+            Left rotation is used to fix right-heavy imbalance in an AVL tree.
+            It involves shifting the node's right child up and making the node
+            the left child of its right child.
+
+            @type node: AVLNode
+            @param node: The node to perform the left rotation on.
+            @rtype: AVLNode
+            @return: The new root of the subtree after rotation.
+
+            Complexity: O(1)
+            """
     def left_rotation(self, node):
         new_root = node.right
         node.right = new_root.left
@@ -501,7 +507,7 @@ class AVLTree(object):
     """
         Performs a right rotation on the given node.
 
-        Left rotation is used to fix left-heavy imbalance in an AVL tree.
+        right rotation is used to fix left-heavy imbalance in an AVL tree.
         It involves shifting the node's left child up and making the node
         the right child of its left child.
 
@@ -701,9 +707,7 @@ class AVLTree(object):
     @returns: a tuple (left, right), where left is an AVLTree representing the keys in the 
     dictionary smaller than node.key, and right is an AVLTree representing the keys in the 
     dictionary larger than node.key.
-    Complexity: 𝑂(logn)
     """
-
     def split(self, node):
         """Splits the AVL tree into two trees: T1 (keys < x) and T2 (keys > x)."""
         key = node.key
@@ -743,8 +747,8 @@ class AVLTree(object):
             smaller_tree.maxnode = smaller_tree_max
 
         # Update TreeSize for both trees
-        bigger_tree.TreeSize = bigger_tree.root.size
-        smaller_tree.TreeSize = smaller_tree.root.size
+        #bigger_tree.TreeSize = bigger_tree.root.size
+        #smaller_tree.TreeSize = smaller_tree.root.size
 
 
 
@@ -755,12 +759,6 @@ class AVLTree(object):
 
         return smaller_tree, bigger_tree
 
-
-    def size_of_subtree(self, node):
-        """Helper to calculate the size of a subtree."""
-        if not node or not node.is_real_node():
-            return 0
-        return 1 + self.size_of_subtree(node.left) + self.size_of_subtree(node.right)
 
     """returns an array representing dictionary 
 
@@ -802,7 +800,6 @@ class AVLTree(object):
     @returns: the number of items in dictionary 
     Complexity: 𝑂(1)
     """
-
     def size(self):
         return self.TreeSize
 
