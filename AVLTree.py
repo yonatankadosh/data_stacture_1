@@ -103,6 +103,7 @@ class AVLNode(object):
         return left_height - right_height
 
 
+
     """returns whether self is not a virtual node 
 
     	@rtype: bool
@@ -767,6 +768,8 @@ class AVLTree(object):
     Complexity: 𝑂(n)
     """
     def avl_to_array(self):
+        if self.TreeSize == 0:
+            return []
         arr = []
         self.avl_to_array_rec(self.root,arr)
         return arr
