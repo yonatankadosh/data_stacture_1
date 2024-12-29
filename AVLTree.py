@@ -768,7 +768,7 @@ class AVLTree(object):
     Complexity: 𝑂(n)
     """
     def avl_to_array(self):
-        if self.TreeSize == 0:
+        if self.TreeSize == 0 or self.root is None:
             return []
         arr = []
         self.avl_to_array_rec(self.root,arr)
