@@ -147,6 +147,9 @@ class AVLNode(object):
                 node = node.right
             edge_distance += 1
 
+        if not node.is_real_node():
+            return None, edge_distance + 1
+
         return node, edge_distance + 1
 
     """ 
